@@ -1,4 +1,5 @@
 # Rwang'ondu Junior School - Result Analyzer & PDF Generator
+**Live Demo:** [https://jimmymuteh.github.io/Result-Analyzer-PDF-Generator/](https://jimmymuteh.github.io/Result-Analyzer-PDF-Generator/)
 
 A client-side CBC academic report generation tool built with JavaScript, HTML5, and CSS3 that enables teachers to input student marks across all 9 junior school learning areas, compute performance descriptors automatically, and instantly download formatted PDF reports for parents.
 
