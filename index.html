@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rwang'ondu Junior School - Report Generator</title>
+  <!-- jsPDF Library for Client-Side PDF Generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #0d1117; color: #c9d1d9; padding: 2rem; max-width: 800px; margin: 0 auto; }
+    form { display: grid; gap: 1rem; margin-bottom: 2rem; background: #161b22; padding: 1.5rem; border-radius: 8px; border: 1px solid #30363d; }
+    .grid-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .subjects-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-top: 0.5rem; }
+    input, button { padding: 0.75rem; border-radius: 6px; border: 1px solid #30363d; background: #0d1117; color: #fff; }
+    input:focus { border-color: #58a6ff; outline: none; }
+    button { background: #238636; border: none; font-weight: bold; cursor: pointer; grid-column: span 3; margin-top: 1rem; }
+    button:hover { background: #2ea043; }
+    .ai-response { padding: 1rem; border-radius: 6px; margin-top: 1rem; background: #161b22; border: 1px solid #30363d; }
+    .pass { border-left: 4px solid #4ecca3; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    td, th { padding: 0.75rem; text-align: left; border-bottom: 1px solid #30363d; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+
+  <h2>Rwang'ondu Junior School - Academic Report System</h2>
+  
+  <form id="reportForm">
+    <div class="grid-row">
+      <input type="text" id="studentName" placeholder="Student Full Name" required>
+      <input type="text" id="admissionNo" placeholder="Admission Number" required>
+    </div>
+    
+    <div style="font-size: 0.85rem; color: #8b949e; margin-top: 0.5rem;">Enter marks out of 100 for all 9 CBC Learning Areas:</div>
+    
+    <div class="subjects-grid">
+      <input type="number" id="sub_English" placeholder="English" min="0" max="100" required>
+      <input type="number" id="sub_Kiswahili" placeholder="Kiswahili" min="0" max="100" required>
+      <input type="number" id="sub_Mathematics" placeholder="Mathematics" min="0" max="100" required>
+      <input type="number" id="sub_Science" placeholder="Integrated Science" min="0" max="100" required>
+      <input type="number" id="sub_SocialStudies" placeholder="Social Studies" min="0" max="100" required>
+      <input type="number" id="sub_CRE" placeholder="CRE" min="0" max="100" required>
+      <input type="number" id="sub_Agriculture" placeholder="Agriculture" min="0" max="100" required>
+      <input type="number" id="sub_PreTech" placeholder="Pre-Technical" min="0" max="100" required>
+      <input type="number" id="sub_CreativeArts" placeholder="Creative Arts" min="0" max="100" required>
+    </div>
+
+    <button type="submit">Generate Report & Download PDF</button>
+  </form>
+
+  <div id="coachDisplay" class="ai-response pass" style="display:none;"></div>
+
+  <h3 style="margin-top: 2rem;">Generated Reports History</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Time</th>
+        <th>Student Name</th>
+        <th>Adm No</th>
+        <th>Mean Score</th>
+        <th>Descriptor</th>
+      </tr>
+    </thead>
+    <tbody id="historyTable"></tbody>
+  </table>
+
+  <script src="app.js"></script>
+</body>
+</html>
