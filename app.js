@@ -1,4 +1,3 @@
-// === 1. SUBJECT CONFIGURATION & SCORING ENGINE ===
 const SUBJECTS = [
   { key: "sub_English", label: "English" },
   { key: "sub_Kiswahili", label: "Kiswahili" },
@@ -11,36 +10,22 @@ const SUBJECTS = [
   { key: "sub_CreativeArts", label: "Creative Arts" }
 ];
 
+const sessionLog = [];
+
 const calculatePerformance = (marksMap) => {
   let totalScore = 0;
   SUBJECTS.forEach(sub => {
-    totalScore += marksMap[sub.key];
+    totalScore += Number(marksMap[sub.key] || 0);
   });
 
   const meanScore = totalScore / SUBJECTS.length;
   
-  // CBC Performance Descriptors
   let descriptor = "Below Expectations";
   if (meanScore >= 75) descriptor = "Exceeding Expectation";
   else if (meanScore >= 55) descriptor = "Meeting Expectation";
   else if (meanScore >= 40) descriptor = "Approaching Expectation";
 
   return { totalScore: Math.round(totalScore), meanScore: meanScore.toFixed(1), descriptor };
-};
-
-// === 2. SESSION HISTORY LOG ===
-const sessionLog = [];
-
-const logEntry = (studentName, admissionNo, result) => {
-  const entry = {
-    id: sessionLog.length + 1,
-    time: new Date().toLocaleTimeString(),
-    studentName,
-    admissionNo,
-    ...result
-  };
-  sessionLog.push(entry);
-  return entry;
 };
 
 const renderHistory = () => {
@@ -52,40 +37,36 @@ const renderHistory = () => {
     return;
   }
   
+  // [NEW] Renders grade, stream, and term dynamically in the table
   tableEl.innerHTML = sessionLog.map(e => `
     <tr>
-      <td style="color:#8b949e;font-size:0.8rem;">${e.time}</td>
-      <td><b>${e.studentName}</b></td>
-      <td>${e.admissionNo}</td>
+      <td><b>${e.studentName}</b> (${e.admissionNo})</td>
+      <td>${e.grade} - Stream ${e.stream}</td>
+      <td>${e.term}</td>
       <td>${e.meanScore}%</td>
       <td style="color:#4ecca3;font-weight:600;">${e.descriptor}</td>
     </tr>
   `).join('');
 };
 
-// === 3. PDF GENERATION ENGINE ===
-const generatePDFReport = (studentName, admissionNo, marksMap, result) => {
+const generatePDFReport = (record) => {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
 
-  // School Header
   doc.setFont("helvetica", "bold");
   doc.setFontSize(14);
   doc.text("RWANG'ONDU JUNIOR SCHOOL", 105, 18, { align: "center" });
   
+  // [NEW] Includes grade, stream, and term inside the PDF header
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  doc.text("CBC ACADEMIC PROGRESS REPORT (GRADES 7 - 9)", 105, 25, { align: "center" });
-
+  doc.text(`CBC ACADEMIC REPORT — ${record.grade} Stream ${record.stream} (${record.term})`, 105, 25, { align: "center" });
   doc.line(20, 30, 190, 30);
 
-  // Student Bio
-  doc.text(`Student Name: ${studentName}`, 20, 40);
-  doc.text(`Admission No: ${admissionNo}`, 130, 40);
-  doc.text(`Date Generated: ${new Date().toLocaleDateString()}`, 20, 47);
+  doc.text(`Student Name: ${record.studentName}`, 20, 40);
+  doc.text(`Admission No: ${record.admissionNo}`, 130, 40);
 
-  // Table Headers
-  let startY = 60;
+  let startY = 55;
   doc.setFillColor(30, 30, 30);
   doc.rect(20, startY, 170, 8, "F");
   doc.setTextColor(255, 255, 255);
@@ -93,7 +74,6 @@ const generatePDFReport = (studentName, admissionNo, marksMap, result) => {
   doc.text("Learning Area (Subject)", 25, startY + 6);
   doc.text("Score (/100)", 150, startY + 6);
 
-  // Table Rows
   startY += 10;
   doc.setTextColor(0, 0, 0);
   doc.setFont("helvetica", "normal");
@@ -104,64 +84,101 @@ const generatePDFReport = (studentName, admissionNo, marksMap, result) => {
       doc.rect(20, startY - 4, 170, 7, "F");
     }
     doc.text(sub.label, 25, startY);
-    doc.text(String(marksMap[sub.key]), 160, startY);
+    doc.text(String(record.marksMap[sub.key]), 160, startY);
     startY += 8;
   });
 
-  // Summary Section
   startY += 5;
   doc.line(20, startY, 190, startY);
   startY += 10;
   doc.setFont("helvetica", "bold");
-  doc.text(`Total Marks: ${result.totalScore} / 900`, 20, startY);
-  doc.text(`Mean Score: ${result.meanScore}%`, 20, startY + 8);
-  doc.text(`Overall Performance: ${result.descriptor}`, 20, startY + 16);
+  doc.text(`Total Marks: ${record.totalScore} / 900`, 20, startY);
+  doc.text(`Mean Score: ${record.meanScore}%`, 20, startY + 8);
+  doc.text(`Overall Performance: ${record.descriptor}`, 20, startY + 16);
 
-  // Save File
-  doc.save(`${admissionNo}_${studentName.replace(/\s+/g, '_')}_Report.pdf`);
+  doc.save(`${record.admissionNo}_${record.studentName.replace(/\s+/g, '_')}_${record.term}.pdf`);
 };
 
-// === 4. FORM EVENT LISTENERS ===
 document.addEventListener('DOMContentLoaded', () => {
   const form = document.querySelector('#reportForm');
+  const csvInput = document.querySelector('#csvFileInput'); // [NEW] Reference to file input
   const display = document.querySelector('#coachDisplay');
 
+  // Single Entry Form Handler
   if (form) {
     form.addEventListener('submit', (event) => {
       event.preventDefault();
 
       const studentName = document.querySelector('#studentName').value.trim();
       const admissionNo = document.querySelector('#admissionNo').value.trim();
+      
+      // [NEW] Captures class parameters from form dropdowns
+      const grade = document.querySelector('#selectGrade').value;
+      const stream = document.querySelector('#selectStream').value;
+      const term = document.querySelector('#selectTerm').value;
 
       const marksMap = {};
-      let hasError = false;
-
       SUBJECTS.forEach(sub => {
-        const val = parseFloat(document.querySelector(`#${sub.key}`).value);
-        if (isNaN(val) || val < 0 || val > 100) hasError = true;
-        marksMap[sub.key] = val;
+        marksMap[sub.key] = parseFloat(document.querySelector(`#${sub.key}`).value);
       });
 
-      if (hasError || !studentName || !admissionNo) {
-        alert("Please provide valid student details and marks between 0 and 100 for all subjects.");
-        return;
-      }
-
       const result = calculatePerformance(marksMap);
-      logEntry(studentName, admissionNo, result);
+      const record = { studentName, admissionNo, grade, stream, term, marksMap, ...result };
+      
+      sessionLog.push(record);
       renderHistory();
+      generatePDFReport(record);
 
-      // Trigger automatic PDF download for parents/records
-      generatePDFReport(studentName, admissionNo, marksMap, result);
-
-      // Display success banner in UI
       display.style.display = "block";
-      display.innerHTML = `
-        <div style="font-weight:bold; color:#4ecca3;">Report Generated Successfully!</div>
-        <div style="font-size:0.9rem; margin-top:0.4rem;">Student: ${studentName} | Mean: ${result.meanScore}% (${result.descriptor})</div>
-      `;
-
+      display.innerHTML = `<b style="color:#4ecca3;">Report generated for ${studentName} (${grade} Stream ${stream})!</b>`;
       form.reset();
+    });
+  }
+
+  // [NEW] CSV BULK UPLOAD HANDLER (Allows multi-teacher entry processing)
+  if (csvInput) {
+    csvInput.addEventListener('change', (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const text = e.target.result;
+        const lines = text.split('\n');
+        
+        let importedCount = 0;
+        for (let i = 1; i < lines.length; i++) {
+          const line = lines[i].trim();
+          if (!line) continue;
+          
+          const cols = line.split(',').map(c => c.trim());
+          if (cols.length < 14) continue;
+
+          const [studentName, admissionNo, grade, stream, term, eng, kis, mat, sci, soc, cre, agr, pre, art] = cols;
+          
+          const marksMap = {
+            sub_English: parseFloat(eng),
+            sub_Kiswahili: parseFloat(kis),
+            sub_Mathematics: parseFloat(mat),
+            sub_Science: parseFloat(sci),
+            sub_SocialStudies: parseFloat(soc),
+            sub_CRE: parseFloat(cre),
+            sub_Agriculture: parseFloat(agr),
+            sub_PreTech: parseFloat(pre),
+            sub_CreativeArts: parseFloat(art)
+          };
+
+          const result = calculatePerformance(marksMap);
+          sessionLog.push({ studentName, admissionNo, grade, stream, term, marksMap, ...result });
+          importedCount++;
+        }
+
+        renderHistory();
+        display.style.display = "block";
+        display.innerHTML = `<b style="color:#4ecca3;">Successfully imported ${importedCount} student records from CSV!</b>`;
+        csvInput.value = "";
+      };
+      reader.readAsText(file);
     });
   }
 

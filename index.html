@@ -3,20 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rwang'ondu Junior School - Report Generator</title>
-  <!-- jsPDF Library for Client-Side PDF Generation -->
+  <title>Rwang'ondu Junior School - Result Analyzer</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
-    body { font-family: system-ui, sans-serif; background: #0d1117; color: #c9d1d9; padding: 2rem; max-width: 800px; margin: 0 auto; }
-    form { display: grid; gap: 1rem; margin-bottom: 2rem; background: #161b22; padding: 1.5rem; border-radius: 8px; border: 1px solid #30363d; }
-    .grid-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    body { font-family: system-ui, sans-serif; background: #0d1117; color: #c9d1d9; padding: 2rem; max-width: 900px; margin: 0 auto; }
+    form, .upload-box { background: #161b22; padding: 1.5rem; border-radius: 8px; border: 1px solid #30363d; margin-bottom: 2rem; }
+    .grid-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1rem; }
     .subjects-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-top: 0.5rem; }
-    input, button { padding: 0.75rem; border-radius: 6px; border: 1px solid #30363d; background: #0d1117; color: #fff; }
-    input:focus { border-color: #58a6ff; outline: none; }
-    button { background: #238636; border: none; font-weight: bold; cursor: pointer; grid-column: span 3; margin-top: 1rem; }
+    input, select, button { padding: 0.75rem; border-radius: 6px; border: 1px solid #30363d; background: #0d1117; color: #fff; width: 100%; box-sizing: border-box; }
+    input:focus, select:focus { border-color: #58a6ff; outline: none; }
+    button { background: #238636; border: none; font-weight: bold; cursor: pointer; margin-top: 1rem; width: auto; padding: 0.75rem 1.5rem; }
     button:hover { background: #2ea043; }
     .ai-response { padding: 1rem; border-radius: 6px; margin-top: 1rem; background: #161b22; border: 1px solid #30363d; }
-    .pass { border-left: 4px solid #4ecca3; }
     table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
     td, th { padding: 0.75rem; text-align: left; border-bottom: 1px solid #30363d; font-size: 0.9rem; }
   </style>
@@ -24,11 +22,44 @@
 <body>
 
   <h2>Rwang'ondu Junior School - Academic Report System</h2>
+
+  <!-- [NEW] CSV BULK UPLOAD BOX FOR MULTI-TEACHER ENTRY -->
+  <div class="upload-box">
+    <h3>Bulk Upload via CSV (Multi-Teacher Entry)</h3>
+    <p style="font-size:0.85rem; color:#8b949e;">CSV Format: `StudentName, AdmissionNo, Grade, Stream, Term, English, Kiswahili, Mathematics, Science, SocialStudies, CRE, Agriculture, PreTech, CreativeArts`</p>
+    <input type="file" id="csvFileInput" accept=".csv" style="margin-top:0.5rem;">
+  </div>
   
+  <!-- SINGLE STUDENT FORM -->
   <form id="reportForm">
+    <h3>Single Student Entry</h3>
+    
+    <!-- [NEW] SELECTORS FOR GRADE & STREAM PARTITIONING -->
     <div class="grid-row">
       <input type="text" id="studentName" placeholder="Student Full Name" required>
       <input type="text" id="admissionNo" placeholder="Admission Number" required>
+      <select id="selectGrade" required>
+        <option value="">Select Grade</option>
+        <option value="Grade 7">Grade 7</option>
+        <option value="Grade 8">Grade 8</option>
+        <option value="Grade 9">Grade 9</option>
+      </select>
+      <select id="selectStream" required>
+        <option value="">Select Stream</option>
+        <option value="A">Stream A</option>
+        <option value="B">Stream B</option>
+        <option value="C">Stream C</option>
+      </select>
+    </div>
+
+    <!-- [NEW] SELECTOR FOR TERM -->
+    <div class="grid-row" style="grid-template-columns: 1fr;">
+      <select id="selectTerm" required style="width: 30%;">
+        <option value="">Select Term</option>
+        <option value="Term 1">Term 1</option>
+        <option value="Term 2">Term 2</option>
+        <option value="Term 3">Term 3</option>
+      </select>
     </div>
     
     <div style="font-size: 0.85rem; color: #8b949e; margin-top: 0.5rem;">Enter marks out of 100 for all 9 CBC Learning Areas:</div>
@@ -48,15 +79,15 @@
     <button type="submit">Generate Report & Download PDF</button>
   </form>
 
-  <div id="coachDisplay" class="ai-response pass" style="display:none;"></div>
+  <div id="coachDisplay" class="ai-response" style="display:none;"></div>
 
-  <h3 style="margin-top: 2rem;">Generated Reports History</h3>
+  <h3 style="margin-top: 2rem;">Processed Reports History</h3>
   <table>
     <thead>
       <tr>
-        <th>Time</th>
         <th>Student Name</th>
-        <th>Adm No</th>
+        <th>Class</th> <!-- [NEW] Displays Grade & Stream -->
+        <th>Term</th>  <!-- [NEW] Displays Term -->
         <th>Mean Score</th>
         <th>Descriptor</th>
       </tr>
